@@ -1,10 +1,11 @@
 import sys
+import csv
 from datetime import datetime as dt
 import matplotlib.pyplot as plt
 import matplotlib.animation as Animation
 import paho.mqtt.client as mqtt
 
-
+fieldnames = ["date", "mess"]
 class Subscriber:
     def __init__(self, topic_id) -> None:
         self.broker = "127.0.0.1"
@@ -12,14 +13,16 @@ class Subscriber:
         self.topic = f"topic/test/{topic_id}"
 
     def log(self, msg, date):
-        with open(f"logs/{msg.topic}.txt", "a") as f:
-            f.write(f"{date}: Received `{msg.payload.decode()}` from {msg.topic} topic\n")
+        date = dt.now().strftime("%H:%M:%S")
+        mess = msg.payload.decode()
+        with open("data.csv", "a") as csv_file:
+            csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 
-    def on_connect(client, userdata, flags, rc):
-            if rc == 0:
-                print(f"Successfully connected")
-            else:
-                print(f"Error {rc}")
+            info = {
+                "date": date,
+                "mess": mess,
+            }
+            csv_writer.writerow(info)
 
     def connect(self) -> mqtt.Client:
         def on_connect(client, userdata, flags, rc):
@@ -46,11 +49,11 @@ class Subscriber:
 def menu() -> Subscriber:
 
     topic_id = int(input("Write id of topic that you want to subscribe: "))
-
     if topic_id >= 1:
         return Subscriber(topic_id)
     else:
         raise ValueError
+
 
 def main():
     try:
@@ -58,6 +61,11 @@ def main():
     except ValueError:
         print("Topic id should be integer with values >= 1")
         sys.exit()
+
+    with open("data.csv", "w") as csv_file:
+        csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        csv_writer.writeheader()
+
     client = subscriber.connect()
     subscriber.subscribe(client)
     client.loop_forever()
