@@ -1,0 +1,15 @@
+Publisher z parametrami:
+1. int >=1 - Nazwa tematu
+2. i 3. zakres z którego będzie generowany wynik
+
+Działanie:
+1. Program generuje liczbę z zakresu od 2. do 3.
+2. Program publikuje wygenerowaną liczbę w topic/test/{prarm 1.}
+
+
+Subscriber z parametrem:
+1. Nazwa subskrybowanego tematu
+
+Działanie:
+1. Otwarcie menu z prośbą o podanie parametru
+2. Subsriber wyświetla raport i wykres z danego tematu
