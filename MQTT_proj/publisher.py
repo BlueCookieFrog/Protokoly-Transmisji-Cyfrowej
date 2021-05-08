@@ -3,6 +3,7 @@ import time
 import json
 import paho.mqtt.client as mqtt
 from random import randint
+from datetime import datetime as dt
 
 
 class Topics:
@@ -34,16 +35,15 @@ class Topics:
             Dictionary of keys with values
         """
         topic = {}
-        while True:
+        key = input("Give topic name (Type EOT to finish writing data): ")
+        while str(key) != "EOT":
+            channels = input(
+                "Give channels names separated with commas (leave empty if you want to publish directly to the topic): "
+            )
+            channels.split(sep=",")
+            topic.update({key: channels})
+
             key = input("Give topic name (Type EOT to finish writing data): ")
-            if str(key) == "EOT":
-                break
-            else:
-                channels = input(
-                    "Give channels names separated with commas (leave empty if you want to publish directly to the topic): "
-                )
-                channels.split(sep=",")
-                topic.update({key: channels})
         return topic
 
     def _get_del(self) -> list:
@@ -82,16 +82,16 @@ class Topics:
         self.data.update(topic)
         self._save()
 
-    def delete(self, keys=_get_del()):
-        for every in keys:
-            try:
-                del self.data[every]
-            except IndexError:
-                print(f"Skipped deleting {every}, key does not exist")
-        self._save()
+    # def delete(self, keys=_get_del()):
+    #     for every in keys:
+    #         try:
+    #             del self.data[every]
+    #         except IndexError:
+    #             print(f"Skipped deleting {every}, key does not exist")
+    #     self._save()
 
 
-def generate_data(val_range) -> int:
+def read_data(val_range) -> int:
     """Generates random int
 
     Parameters
@@ -104,15 +104,18 @@ def generate_data(val_range) -> int:
     int
         random value
     """
-    return randint(int(val_range[0]), int(val_range[1]))
+    return (
+        dt.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+        randint(int(val_range[0]), int(val_range[1])),
+    )
 
 
 class Publisher:
     def __init__(self, topic_id, val_range: list) -> None:
-        self.data = generate_data(val_range)
+        self.data = str(read_data(val_range))
         self.broker = "127.0.0.1"
         self.port = 1883
-        self.topic = f"topic/{topic_id}"
+        self.topic = topic_id
 
     def connect(self) -> mqtt.Client:
         client = mqtt.Client()
@@ -123,10 +126,21 @@ class Publisher:
         client.publish(f"{self.topic}", self.data)
 
 
+def get_topics():
+    with open("config/pub.json", "r") as f:
+        dict = json.load(f)
+
+    topics = []
+    for j in dict[sys.argv[1]]:
+        topics.append(f"{sys.argv[1]}/{j}")
+    return topics
+
+
 def run():
-    pub = Publisher(sys.argv[1], sys.argv[2:4])
-    client = pub.connect()
-    pub.publish(client)
+    for each in get_topics():
+        pub = Publisher(each, (0, 1024))
+        client = pub.connect()
+        pub.publish(client)
 
 
 if __name__ == "__main__":

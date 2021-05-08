@@ -2,6 +2,7 @@ import sys
 import time
 import paho.mqtt.client as mqtt
 from random import randint
+from datetime import datetime as dt
 
 
 class Publisher:
@@ -20,7 +21,7 @@ class Publisher:
         return randint(int(self.data[0]), int(self.data[1]))
 
     def publish(self, client: mqtt.Client) -> None:
-        data = self._generate_data()
+        data = f"{dt.now().strftime('[%d.%m.%Y %H:%M:%S]')}, {self._generate_data()}"
         client.publish(f"{self.topic}", data)
 
 

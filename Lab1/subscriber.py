@@ -6,11 +6,19 @@ import matplotlib.animation as Animation
 import paho.mqtt.client as mqtt
 
 fieldnames = ["date", "mess"]
+
+
 class Subscriber:
     def __init__(self, topic_id) -> None:
         self.broker = "127.0.0.1"
         self.port = 1883
         self.topic = f"topic/test/{topic_id}"
+
+    def read_data(self, msg):
+        data = msg.payload.decode().split(sep=", ")
+        date = data[0]
+        val = int(data[1])
+        return date, val
 
     def log(self, msg, date):
         date = dt.now().strftime("%H:%M:%S")
@@ -39,7 +47,10 @@ class Subscriber:
     def subscribe(self, client: mqtt) -> None:
         def on_message(client, userdata, msg):
             date = dt.now().strftime("[%d.%m.%Y, %H:%M:%S]")
-            print(f"{date}: Received `{msg.payload.decode()}` from {msg.topic} topic")
+            date_sent, val = self.read_data(msg)
+            print(
+                f"{date}: Received `{val}` sent at {date_sent} from {msg.topic} topic"
+            )
             self.log(msg, date)
 
         client.subscribe(self.topic)
